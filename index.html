@@ -1008,6 +1008,207 @@ document.addEventListener('keydown', e => {
 
 // init config panel display
 updateConfigPanel();
+
+// ─── MOBILE BOTTOM NAV ───────────────────────────────────
+function mobileNav(el, page) {
+  document.querySelectorAll('.mob-nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  // sync sidebar nav items
+  document.querySelectorAll('.nav-item[data-page]').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const info = pageMap[page];
+  document.getElementById('tb-name').textContent = info.name;
+  document.getElementById('tb-badge').textContent = info.badge;
+  const r = document.getElementById('tb-right');
+  if (page === 'analyser') {
+    r.innerHTML = `<button class="tb-btn" onclick="resetForm()"><svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-reset"/></svg>Reset</button>`;
+  } else if (page === 'history') {
+    r.innerHTML = `<button class="tb-btn danger" onclick="clearAllHistory()"><svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-trash"/></svg>Clear</button>`;
+    renderHistory();
+  } else { r.innerHTML = ''; }
+}
 </script>
+
+<style>
+/* ═══════════════════════════════════════════════
+   MOBILE RESPONSIVE — max-width: 768px
+═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Hide desktop sidebar */
+  .sidebar { display: none; }
+
+  /* Shell full width */
+  .shell { flex-direction: column; }
+
+  /* Main takes full width */
+  .main { width: 100vw; }
+
+  /* Topbar compact */
+  .topbar { padding: 0 14px; gap: 8px; }
+  .tb-cat { display: none; }
+  .tb-sep { display: none; }
+  .tb-name { font-size: 13px; }
+  .tb-badge { font-size: 8px; padding: 2px 8px; }
+
+  /* Pages — add bottom padding for mobile nav */
+  .page { padding: 14px 14px 80px; gap: 14px; }
+
+  /* Metric tiles — 1 column on very small, 3 on medium mobile */
+  .metric-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .metric-tile { padding: 12px 10px; }
+  .metric-value { font-size: 16px; }
+  .metric-label { font-size: 9px; }
+  .metric-sub { font-size: 9px; display: none; }
+
+  /* WS Grid — stack vertically */
+  .ws-grid { grid-template-columns: 1fr !important; gap: 12px; }
+
+  /* Cards */
+  .card { padding: 16px; }
+  .verdict-card { padding: 16px; }
+
+  /* Thresh pills — wrap nicely */
+  .thresh-group { gap: 6px; }
+  .thresh-pill { padding: 8px 10px; min-width: 70px; }
+  .pill-val { font-size: 15px; }
+
+  /* Gauge pct smaller */
+  .gauge-pct { font-size: 22px; }
+
+  /* History table — scrollable */
+  .history-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .history-table th, .history-table td { padding: 10px 12px; font-size: 11px; white-space: nowrap; }
+
+  /* History stats — 2x2 grid */
+  .history-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .h-stat { padding: 12px 14px; }
+  .h-stat-val { font-size: 18px; }
+
+  /* Threshold config — 1 column */
+  .thresh-config-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tcc-val { font-size: 24px; }
+
+  /* Hide config right panel on mobile — stack below */
+  #page-config .ws-grid { grid-template-columns: 1fr !important; }
+
+  /* Buttons full width on mobile */
+  .btn-analyse { margin-top: 14px; }
+
+  /* Custom thresh row */
+  .custom-row { margin-top: 8px; }
+
+  /* Intel block */
+  .intel-block { padding: 12px; }
+  .intel-text { font-size: 11px; }
+
+  /* Analysis items smaller */
+  .ai-label { font-size: 11px; }
+  .ai-value { font-size: 12px; }
+
+  /* Empty state */
+  .empty-state { padding: 28px 16px; }
+
+  /* Toast — full width bottom */
+  .toast { left: 14px; right: 14px; bottom: 72px; }
+
+  /* Footer note */
+  .footer-note { font-size: 8px; padding-bottom: 8px; }
+}
+
+/* Extra small phones */
+@media (max-width: 380px) {
+  .metric-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .metric-value { font-size: 14px; }
+  .thresh-config-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── MOBILE BOTTOM NAV ─── */
+.mob-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--chrome);
+  border-top: 1px solid var(--border-subtle);
+  z-index: 100;
+  padding: 0 8px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (max-width: 768px) {
+  .mob-nav { display: flex; align-items: center; justify-content: space-around; }
+}
+
+.mob-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: color .14s, background .14s;
+  flex: 1;
+  border: none;
+  background: none;
+}
+.mob-nav-item:hover { color: var(--text-secondary); }
+.mob-nav-item.active { color: var(--accent); }
+.mob-nav-item svg {
+  width: 20px; height: 20px;
+  stroke: currentColor; fill: none;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.mob-nav-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+.mob-nav-item.active .mob-nav-label { color: var(--accent); }
+
+/* Active indicator dot */
+.mob-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 20px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 0 0 2px 2px;
+}
+.mob-nav-item { position: relative; }
+</style>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mob-nav">
+  <button class="mob-nav-item active" onclick="mobileNav(this,'analyser')">
+    <svg><use href="#ic-calc"/></svg>
+    <span class="mob-nav-label">Analyser</span>
+  </button>
+  <button class="mob-nav-item" onclick="mobileNav(this,'config')">
+    <svg><use href="#ic-sliders"/></svg>
+    <span class="mob-nav-label">Config</span>
+  </button>
+  <button class="mob-nav-item" onclick="mobileNav(this,'history')">
+    <svg><use href="#ic-history"/></svg>
+    <span class="mob-nav-label">History</span>
+  </button>
+  <button class="mob-nav-item" onclick="window.open('https://github.com/mlateffitazri-debug/credora-lite','_blank')">
+    <svg><use href="#ic-github"/></svg>
+    <span class="mob-nav-label">GitHub</span>
+  </button>
+</nav>
+
 </body>
 </html>
