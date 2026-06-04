@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CREDORA Lite — DSR Analyser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --void:#111214;--chrome:#0e0f11;--elevated:#1a1b1e;--float:#1f2124;--overlay:#242628;
+  --border-ghost:rgba(255,255,255,.04);--border-subtle:rgba(255,255,255,.07);
+  --border-visible:rgba(255,255,255,.11);--border-strong:rgba(255,255,255,.18);
+  --accent:#B6FF00;--accent-dim:rgba(182,255,0,.10);--accent-ghost:rgba(182,255,0,.05);
+  --pass:#B6FF00;--pass-dim:rgba(182,255,0,.08);--pass-border:rgba(182,255,0,.25);
+  --caution:#f5a524;--caution-dim:rgba(245,165,36,.10);--caution-border:rgba(245,165,36,.28);
+  --fail:#ff5c5c;--fail-dim:rgba(255,92,92,.10);--fail-border:rgba(255,92,92,.28);
+  --text-primary:#e8e8e8;--text-secondary:rgba(232,232,232,.55);
+  --text-tertiary:rgba(232,232,232,.30);--text-label:rgba(232,232,232,.38);
+  --font-display:'Syne',sans-serif;--font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono','SF Mono',monospace;
+  --r-xs:6px;--r-sm:10px;--r-md:14px;--r-lg:18px;--r-pill:999px;
+  --shadow-card:0 0 0 1px var(--border-subtle),0 2px 4px rgba(0,0,0,.6),0 6px 20px rgba(0,0,0,.45),0 16px 48px rgba(0,0,0,.3);
+  --sidebar-w:220px;--topbar-h:52px;--ease-out:cubic-bezier(.16,1,.3,1);
+}
+html,body{height:100%;font-family:var(--font-body);background:var(--void);color:var(--text-primary);overflow:hidden;font-size:14px;-webkit-font-smoothing:antialiased}
+body{background-image:radial-gradient(ellipse 140% 90% at 50% -10%,rgba(182,255,0,.025) 0%,transparent 55%),radial-gradient(ellipse 60% 50% at 0% 100%,rgba(182,255,0,.012) 0%,transparent 50%);background-attachment:fixed}
+::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.07);border-radius:99px}
+
+.shell{display:flex;width:100vw;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--chrome);border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;padding:16px 0 12px;flex-shrink:0;z-index:10}
+.sb-top{display:flex;align-items:center;gap:10px;padding:0 14px;margin-bottom:24px}
+.sb-logo{width:34px;height:34px;min-width:34px;border-radius:9px;background:#111214;border:1px solid var(--border-visible);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.sb-logo svg{width:26px;height:26px}
+.sb-wordmark{display:flex;flex-direction:column;gap:1px}
+.sb-name{font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--text-primary);letter-spacing:.02em;line-height:1}
+.sb-tag{font-family:var(--font-mono);font-size:9px;color:var(--text-label);letter-spacing:.08em;text-transform:uppercase}
+.nav-section-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-label);padding:0 16px;margin:16px 0 6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;margin:0 8px;border-radius:var(--r-sm);cursor:pointer;color:var(--text-tertiary);font-size:12px;font-weight:500;transition:background .14s,color .14s;border:1px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text-secondary)}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(182,255,0,.18)}
+.nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nav-sep{height:1px;background:var(--border-ghost);margin:10px 14px}
+.sb-bottom{margin-top:auto;padding:12px 14px;border-top:1px solid var(--border-ghost)}
+.sb-ver{font-family:var(--font-mono);font-size:9px;color:var(--text-label);letter-spacing:.06em}
+.sb-ver span{color:var(--accent);opacity:.7}
+
+/* MAIN */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:var(--topbar-h);min-height:var(--topbar-h);background:var(--chrome);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.tb-bc{display:flex;align-items:center;gap:8px;flex:1}
+.tb-cat{font-size:10px;font-weight:600;color:var(--text-label);text-transform:uppercase;letter-spacing:.08em}
+.tb-sep{color:var(--text-label);opacity:.4;font-size:11px}
+.tb-name{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--text-primary)}
+.tb-badge{font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:.08em;padding:3px 10px;border-radius:var(--r-pill);background:var(--accent-ghost);border:1px solid rgba(182,255,0,.22);color:var(--accent);text-transform:uppercase}
+.tb-right{display:flex;align-items:center;gap:8px}
+.tb-btn{height:30px;padding:0 12px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.06em;border:1px solid var(--border-visible);background:transparent;color:var(--text-secondary);text-transform:uppercase;display:flex;align-items:center;gap:6px;transition:background .14s,color .14s}
+.tb-btn:hover{background:rgba(255,255,255,.05);color:var(--text-primary)}
+.tb-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tb-btn.danger{border-color:var(--fail-border);color:var(--fail)}
+.tb-btn.danger:hover{background:var(--fail-dim)}
+
+/* PAGES */
+.page{display:none;flex:1;overflow-y:auto;padding:24px;flex-direction:column;gap:20px}
+.page.active{display:flex}
+.ws-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+
+/* CARDS */
+.card{background:var(--elevated);border:1px solid var(--border-subtle);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);pointer-events:none}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.card-label{font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-label);display:flex;align-items:center;gap:7px}
+.card-label .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0}
+
+/* METRIC TILES */
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.metric-tile{background:var(--float);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:16px 18px;transition:transform .2s var(--ease-out),border-color .2s}
+.metric-tile:hover{transform:translateY(-2px);border-color:var(--border-visible)}
+.metric-label{font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--text-label);margin-bottom:8px}
+.metric-value{font-family:var(--font-mono);font-size:24px;font-weight:500;color:var(--text-primary);line-height:1.1}
+.metric-value.pc{color:var(--pass)}.metric-value.cc{color:var(--caution)}.metric-value.fc{color:var(--fail)}
+.metric-sub{font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-top:5px}
+
+/* GAUGE */
+.gauge-wrap{margin-bottom:22px}
+.gauge-hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.gauge-title{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em}
+.gauge-pct{font-family:var(--font-mono);font-size:28px;font-weight:500;color:var(--text-primary);line-height:1}
+.gauge-track{width:100%;height:6px;background:rgba(255,255,255,.06);border-radius:3px;position:relative;overflow:visible;margin-bottom:6px}
+.gauge-fill{height:100%;border-radius:3px;transition:width .6s var(--ease-out),background .4s}
+.gauge-marker{position:absolute;top:-4px;width:1px;height:14px;background:rgba(255,255,255,.25);transition:left .6s var(--ease-out)}
+.gauge-marker::after{content:attr(data-label);position:absolute;top:18px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);white-space:nowrap;letter-spacing:.04em}
+.gauge-ticks{display:flex;justify-content:space-between;padding:0;margin-top:22px}
+.gauge-tick{font-family:var(--font-mono);font-size:8px;color:var(--text-label)}
+
+/* FORMS */
+.form-sect{margin-bottom:18px}
+.form-sect:last-of-type{margin-bottom:0}
+.form-label{font-size:11px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;display:block}
+.input-wrap{position:relative;display:flex;align-items:center}
+.input-pfx{position:absolute;left:12px;font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--text-tertiary);pointer-events:none;user-select:none;z-index:1}
+.input-sfx{position:absolute;right:12px;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);pointer-events:none;user-select:none}
+input.field{width:100%;padding:10px 12px 10px 40px;background:var(--float);border:1px solid var(--border-subtle);border-radius:var(--r-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:14px;outline:none;transition:border-color .15s,background .15s,box-shadow .15s;-moz-appearance:textfield;appearance:textfield}
+input.field::-webkit-inner-spin-button,input.field::-webkit-outer-spin-button{-webkit-appearance:none}
+input.field:focus{border-color:rgba(182,255,0,.4);background:var(--overlay);box-shadow:0 0 0 3px rgba(182,255,0,.07)}
+input.field::placeholder{color:var(--text-tertiary);font-weight:300}
+input.field.no-pfx{padding-left:12px}
+input.field.with-sfx{padding-right:40px}
+input.field.sm{padding:8px 12px 8px 40px;font-size:13px}
+.hint{font-size:10px;color:var(--text-tertiary);margin-top:5px;font-family:var(--font-mono)}
+
+/* THRESH PILLS */
+.thresh-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.thresh-pill{display:flex;flex-direction:column;align-items:center;padding:10px 14px;border-radius:var(--r-sm);cursor:pointer;background:var(--float);border:1px solid var(--border-subtle);transition:all .15s;flex:1;min-width:80px}
+.thresh-pill:hover{border-color:var(--border-visible);background:var(--overlay)}
+.thresh-pill.active{background:var(--accent-dim);border-color:rgba(182,255,0,.3);box-shadow:0 0 0 1px rgba(182,255,0,.1)}
+.pill-code{font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text-label);margin-bottom:3px}
+.pill-val{font-family:var(--font-mono);font-size:18px;font-weight:500;color:var(--text-secondary)}
+.thresh-pill.active .pill-code{color:var(--accent);opacity:.8}
+.thresh-pill.active .pill-val{color:var(--accent)}
+.pill-desc{font-size:9px;color:var(--text-tertiary);margin-top:2px}
+
+/* BUTTONS */
+.btn-analyse{width:100%;padding:12px;border-radius:var(--r-md);background:var(--accent);color:#111214;font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s,box-shadow .2s;box-shadow:0 4px 20px rgba(182,255,0,.15);margin-top:18px}
+.btn-analyse:hover{background:#c8ff1a;box-shadow:0 6px 28px rgba(182,255,0,.25)}
+.btn-analyse:active{transform:scale(.98)}
+.btn-analyse svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-save{padding:10px 20px;border-radius:var(--r-md);background:var(--accent);color:#111214;font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s,transform .1s;box-shadow:0 4px 16px rgba(182,255,0,.12)}
+.btn-save:hover{background:#c8ff1a}
+.btn-save:active{transform:scale(.98)}
+.btn-save svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-ghost{padding:8px 14px;border-radius:var(--r-sm);background:transparent;color:var(--text-secondary);font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--border-visible);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .14s,color .14s}
+.btn-ghost:hover{background:rgba(255,255,255,.05);color:var(--text-primary)}
+.btn-ghost svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn-danger{padding:8px 14px;border-radius:var(--r-sm);background:transparent;color:var(--fail);font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--fail-border);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .14s}
+.btn-danger:hover{background:var(--fail-dim)}
+.btn-danger svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* VERDICT PANEL */
+.verdict-card{background:var(--elevated);border:1px solid var(--border-subtle);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.verdict-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);pointer-events:none}
+.verdict-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.verdict-badge{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:var(--r-pill);border:1px solid}
+.vb-pass{background:var(--pass-dim);color:var(--pass);border-color:var(--pass-border)}
+.vb-caution{background:var(--caution-dim);color:var(--caution);border-color:var(--caution-border)}
+.vb-fail{background:var(--fail-dim);color:var(--fail);border-color:var(--fail-border)}
+.vb-neutral{background:rgba(255,255,255,.04);color:var(--text-tertiary);border-color:var(--border-subtle)}
+
+/* ANALYSIS ITEMS */
+.analysis-list{display:flex;flex-direction:column}
+.analysis-item{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-ghost)}
+.analysis-item:last-child{border-bottom:none}
+.ai-label{font-size:12px;color:var(--text-secondary);flex-shrink:0}
+.ai-value{font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary);text-align:right}
+.ai-value.pc{color:var(--pass)}.ai-value.cc{color:var(--caution)}.ai-value.fc{color:var(--fail)}
+
+/* INTEL BLOCK */
+.intel-block{background:var(--float);border:1px solid var(--border-ghost);border-radius:var(--r-md);padding:14px 16px;margin-top:14px}
+.intel-label{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-label);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.intel-label svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.intel-text{font-size:12px;color:var(--text-secondary);line-height:1.7}
+.intel-text strong{color:var(--text-primary);font-weight:500}
+
+/* STATUS STRIP */
+.status-strip{height:3px;width:100%;border-radius:2px;margin-bottom:16px;background:var(--border-ghost);overflow:hidden}
+.status-fill{height:100%;border-radius:2px;transition:width .6s var(--ease-out),background .4s}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+.empty-icon{width:48px;height:48px;margin:0 auto 14px;color:var(--text-tertiary);opacity:.4}
+.empty-icon svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.empty-title{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px}
+.empty-sub{font-size:11px;color:var(--text-tertiary);line-height:1.6}
+
+/* CUSTOM ROW */
+.custom-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.custom-row-label{font-size:10px;color:var(--text-label);font-family:var(--font-mono);letter-spacing:.04em;white-space:nowrap;text-transform:uppercase}
+
+/* ERROR */
+.err-msg{background:var(--fail-dim);border:1px solid var(--fail-border);border-radius:var(--r-sm);padding:8px 12px;font-family:var(--font-mono);font-size:11px;color:var(--fail);margin-top:10px;display:none}
+.err-msg.show{display:block}
+
+/* SUCCESS TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--elevated);border:1px solid var(--pass-border);border-radius:var(--r-md);padding:12px 18px;font-family:var(--font-mono);font-size:12px;color:var(--pass);z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-card);transform:translateY(80px);opacity:0;transition:transform .3s var(--ease-out),opacity .3s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border-ghost);margin:16px 0}
+
+/* ─── THRESHOLD CONFIG PAGE ─── */
+.thresh-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.thresh-config-card{background:var(--float);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:18px;position:relative;cursor:pointer;transition:border-color .15s,background .15s}
+.thresh-config-card:hover{border-color:var(--border-visible)}
+.thresh-config-card.selected{border-color:rgba(182,255,0,.35);background:var(--accent-dim)}
+.tcc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tcc-code{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-label)}
+.thresh-config-card.selected .tcc-code{color:var(--accent)}
+.tcc-check{width:16px;height:16px;border-radius:50%;border:1px solid var(--border-visible);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.thresh-config-card.selected .tcc-check{background:var(--accent);border-color:var(--accent)}
+.tcc-check svg{width:9px;height:9px;stroke:#111214;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;display:none}
+.thresh-config-card.selected .tcc-check svg{display:block}
+.tcc-val{font-family:var(--font-mono);font-size:32px;font-weight:500;color:var(--text-primary);line-height:1;margin-bottom:4px}
+.thresh-config-card.selected .tcc-val{color:var(--accent)}
+.tcc-name{font-size:11px;color:var(--text-secondary);font-weight:500;margin-bottom:2px}
+.tcc-desc{font-size:10px;color:var(--text-tertiary)}
+
+.config-section{margin-bottom:24px}
+.config-section-title{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-label);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.config-section-title .dot{width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0}
+
+.range-wrap{display:flex;align-items:center;gap:14px;margin-top:8px}
+input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--float);outline:none;border:1px solid var(--border-subtle)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid #111214;box-shadow:0 0 8px rgba(182,255,0,.3)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid #111214}
+.range-val{font-family:var(--font-mono);font-size:18px;font-weight:500;color:var(--accent);min-width:52px;text-align:right}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-ghost)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:12px;color:var(--text-secondary)}
+.toggle-sub{font-size:10px;color:var(--text-tertiary);margin-top:2px}
+.toggle{width:36px;height:20px;border-radius:10px;background:var(--float);border:1px solid var(--border-subtle);cursor:pointer;position:relative;transition:background .2s,border-color .2s;flex-shrink:0}
+.toggle.on{background:var(--accent-dim);border-color:rgba(182,255,0,.3)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--text-tertiary);transition:transform .2s,background .2s}
+.toggle.on::after{transform:translateX(16px);background:var(--accent)}
+
+/* ─── HISTORY PAGE ─── */
+.history-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.h-stat{background:var(--float);border:1px solid var(--border-subtle);border-radius:var(--r-md);padding:14px 16px}
+.h-stat-label{font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--text-label);margin-bottom:6px}
+.h-stat-val{font-family:var(--font-mono);font-size:22px;font-weight:500;color:var(--text-primary)}
+.h-stat-val.pc{color:var(--pass)}.h-stat-val.cc{color:var(--caution)}.h-stat-val.fc{color:var(--fail)}
+
+.history-table-wrap{background:var(--elevated);border:1px solid var(--border-subtle);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-card)}
+.history-table{width:100%;border-collapse:collapse}
+.history-table th{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-label);padding:12px 16px;background:var(--float);border-bottom:1px solid var(--border-subtle);text-align:left;white-space:nowrap}
+.history-table td{padding:12px 16px;border-bottom:1px solid var(--border-ghost);font-size:12px;color:var(--text-secondary);vertical-align:middle}
+.history-table tr:last-child td{border-bottom:none}
+.history-table tr:hover td{background:rgba(255,255,255,.02)}
+.history-table td.mono{font-family:var(--font-mono);color:var(--text-primary)}
+.h-badge{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:var(--r-pill);border:1px solid;display:inline-block}
+.h-badge.pass{background:var(--pass-dim);color:var(--pass);border-color:var(--pass-border)}
+.h-badge.caution{background:var(--caution-dim);color:var(--caution);border-color:var(--caution-border)}
+.h-badge.fail{background:var(--fail-dim);color:var(--fail);border-color:var(--fail-border)}
+.del-row-btn{background:none;border:none;cursor:pointer;color:var(--text-tertiary);padding:4px;border-radius:var(--r-xs);transition:color .14s,background .14s;display:flex;align-items:center}
+.del-row-btn:hover{color:var(--fail);background:var(--fail-dim)}
+.del-row-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.footer-note{font-family:var(--font-mono);font-size:9px;color:var(--text-label);letter-spacing:.04em;text-align:center;padding:0 0 4px}
+.footer-note a{color:var(--accent);opacity:.6;text-decoration:none}
+.footer-note a:hover{opacity:1}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ic-calc" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/></symbol>
+  <symbol id="ic-sliders" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+  <symbol id="ic-history" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/><line x1="12" y1="7" x2="12" y2="12"/><polyline points="12 12 15 14"/></symbol>
+  <symbol id="ic-github" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="ic-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></symbol>
+  <symbol id="ic-reset" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></symbol>
+  <symbol id="ic-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+  <symbol id="ic-arrow" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+  <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+  <symbol id="ic-chart" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></symbol>
+</svg>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <svg viewBox="0 0 841.9 595.3" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#B6FF00" d="M387.6,58c2,0,4-0.2,5.9,0c11.6,1.2,23.3,2,34.7,3.9c10.7,1.8,21.3,4.2,31.7,7.3c17.3,5.1,34.6,11,49.4,21.6c20.2,14.5,28.6,34.7,24.5,59.3c-3.8,22.7-17.2,38.3-38.6,46.3c-16.1,6-32.2,4.8-47.6-2.8c-11.6-5.7-23.6-10.2-36.3-12.5c-14-2.5-28-2.8-42.1-0.7c-23.3,3.4-43.9,12.6-62.1,27.3c-16,12.9-28.1,28.7-36.5,47.4c-7.3,16.4-11.1,33.6-11.3,51.5c-0.1,15.8,2.5,31.1,8.1,45.9c7.8,20.8,20.1,38.5,36.9,52.9c12.5,10.8,26.7,18.7,42.4,24.1c18.2,6.3,36.9,8.5,55.8,6c44.9-5.9,78.4-29,99.8-69c7.7-14.4,11.5-30.1,13.9-46.2c3.2-21.5,14.9-37.3,34.6-46.2c30.4-13.8,64.7-1.2,79.3,28.7c5.6,11.5,7.4,23.8,4.9,36.5c-1.9,9.5-3.5,19.1-5.6,28.5c-3.3,14.5-8.3,28.4-14.4,42c-14.2,31.8-34.2,59.4-60,82.8c-18,16.3-38.1,29.6-60.1,40.1c-15.5,7.4-31.7,13.2-48.4,17.3c-13.5,3.3-27.3,5.5-41.3,6.3c-10.2,0.6-20.5,1.6-30.6,0.8c-46.5-3.9-89.7-17.4-128.4-44.2c-35.8-24.9-63.3-56.9-82.5-96.1c-7.9-16.2-14-33.1-18.3-50.6c-3-12.3-4.7-24.9-6.1-37.5c-1.1-9.3-1.7-18.6-1.1-27.9c0.7-11.3,1.9-22.5,3.8-33.7c1.7-10.3,4.3-20.6,7-30.7c4.4-16.4,11.1-32.1,19.2-47c21.7-40.2,52.1-72,91.2-95.6c17.2-10.4,35.5-18.6,54.7-24.5c17.2-5.3,34.8-8.9,52.8-10.1c6.8-0.5,13.5-1.3,20.3-1.9C387.6,57.6,387.6,57.8,387.6,58z"/>
+          <path fill="rgba(255,255,255,0.5)" d="M297.1,301.3c1.8-33.2,19.8-62,56-78.2c18-8.1,36.9-9.3,56.2-4.8c9.6,2.3,18.6,5.9,27.1,11c7.2,4.3,15.2,6.4,23.3,8c11,2.1,22.1,2.3,33.3,0.4c17.3-2.8,32.6-9.8,46.1-20.8c13.6-11.1,23.6-25,29.3-41.6c2.8-8.1,4.5-16.7,5.7-25.2c4.4-32.6,20.7-56.7,49.8-72c16.6-8.7,34.5-11.7,52.8-9c31.9,4.6,55.5,21.5,70.3,50.2c4.3,8.3,6.5,17.2,8.5,26.3c1.7,8,2,16.1,0.8,23.8c-2.4,16.4-7.8,31.8-18.1,45.3c-12.5,16.4-28.7,27.6-48.5,33.2c-15.1,4.3-30.6,4.8-45.8,0.7c-7.2-1.9-14.2-4.6-20.9-7.6c-15.5-6.9-31.3-12.2-48.5-11.6c-35,1.3-62.1,16.6-81,46.2c-8,12.5-12,26.3-13.9,41c-4.6,36-23.4,61.9-57,75.7c-43.4,17.9-93.5-1-115.1-42.5C300.6,336.8,297,322.1,297.1,301.3z"/>
+        </svg>
+      </div>
+      <div class="sb-wordmark">
+        <div class="sb-name">CREDORA</div>
+        <div class="sb-tag">Lite · DSR Module</div>
+      </div>
+    </div>
+
+    <div class="nav-section-label">Tools</div>
+    <div class="nav-item active" data-page="analyser" onclick="nav(this,'analyser')">
+      <svg><use href="#ic-calc"/></svg>
+      <span>DSR Analyser</span>
+    </div>
+    <div class="nav-item" data-page="config" onclick="nav(this,'config')">
+      <svg><use href="#ic-sliders"/></svg>
+      <span>Threshold Config</span>
+    </div>
+    <div class="nav-item" data-page="history" onclick="nav(this,'history')">
+      <svg><use href="#ic-history"/></svg>
+      <span>History</span>
+    </div>
+
+    <div class="nav-sep"></div>
+    <div class="nav-section-label">Links</div>
+    <div class="nav-item" onclick="window.open('https://github.com','_blank')">
+      <svg><use href="#ic-github"/></svg>
+      <span>GitHub Source</span>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-ver">CREDORA LITE &nbsp;<span>v1.0.0</span></div>
+      <div class="sb-ver" style="margin-top:2px;opacity:.5">Open Source · MIT</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar" id="topbar">
+      <div class="tb-bc">
+        <span class="tb-cat">Credit Analysis</span>
+        <span class="tb-sep">›</span>
+        <span class="tb-name" id="tb-name">DSR Analyser</span>
+        <div class="tb-badge" id="tb-badge">Debt Service Ratio</div>
+      </div>
+      <div class="tb-right" id="tb-right">
+        <button class="tb-btn" onclick="resetForm()">
+          <svg><use href="#ic-reset"/></svg>Reset
+        </button>
+      </div>
+    </header>
+
+    <!-- PAGE: DSR ANALYSER -->
+    <div class="page active" id="page-analyser">
+      <div class="metric-grid">
+        <div class="metric-tile">
+          <div class="metric-label">DSR Ratio</div>
+          <div class="metric-value" id="mt-dsr">—</div>
+          <div class="metric-sub" id="mt-dsr-sub">Awaiting input</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-label">Net Disposable Income</div>
+          <div class="metric-value" id="mt-ndi">—</div>
+          <div class="metric-sub" id="mt-ndi-sub">Income − Commitment</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-label">Threshold Margin</div>
+          <div class="metric-value" id="mt-margin">—</div>
+          <div class="metric-sub" id="mt-margin-sub">Buffer remaining</div>
+        </div>
+      </div>
+
+      <div class="ws-grid">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-hdr"><div class="card-label"><span class="dot"></span>Financial Input</div></div>
+            <div class="form-sect">
+              <label class="form-label">Total Monthly Commitment <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary)">(Jumlah Komitmen)</span></label>
+              <div class="input-wrap"><span class="input-pfx">RM</span><input type="number" class="field" id="inp-commitment" placeholder="0.00" min="0" step="100" oninput="onInputChange()"></div>
+              <div class="hint">Termasuk semua pinjaman aktif, kad kredit, hire purchase</div>
+            </div>
+            <div class="form-sect" style="margin-bottom:0">
+              <label class="form-label">Total Gross Monthly Income <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary)">(Jumlah Pendapatan Kasar)</span></label>
+              <div class="input-wrap"><span class="input-pfx">RM</span><input type="number" class="field" id="inp-income" placeholder="0.00" min="0" step="100" oninput="onInputChange()"></div>
+              <div class="hint">Gaji pokok + elaun tetap + pendapatan tambahan</div>
+            </div>
+            <div class="err-msg" id="err-msg">
+              <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;display:inline;vertical-align:middle;margin-right:5px"><use href="#ic-alert"/></svg>
+              Sila masukkan nilai income yang sah (lebih dari 0).
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hdr">
+              <div class="card-label"><span class="dot"></span>Policy Threshold</div>
+              <span style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono)">Active: <span id="active-thresh-display" style="color:var(--accent)">60%</span></span>
+            </div>
+            <div class="thresh-group" id="thresh-group">
+              <div class="thresh-pill active" data-val="60" onclick="selectThresh(this,60)">
+                <span class="pill-code">DSR</span><span class="pill-val">60%</span><span class="pill-desc">Standard</span>
+              </div>
+              <div class="thresh-pill" data-val="70" onclick="selectThresh(this,70)">
+                <span class="pill-code">NDR</span><span class="pill-val">70%</span><span class="pill-desc">Negotiated</span>
+              </div>
+              <div class="thresh-pill" data-val="80" onclick="selectThresh(this,80)">
+                <span class="pill-code">BLR</span><span class="pill-val">80%</span><span class="pill-desc">Base Lending</span>
+              </div>
+            </div>
+            <div class="custom-row">
+              <span class="custom-row-label">Custom:</span>
+              <div class="input-wrap" style="flex:1">
+                <input type="number" class="field no-pfx with-sfx" id="inp-custom" placeholder="Masukkan %" min="1" max="100" step="0.5" oninput="onCustomChange(this)">
+                <span class="input-sfx">%</span>
+              </div>
+            </div>
+            <button class="btn-analyse" onclick="runAnalysis()">
+              <svg><use href="#ic-arrow"/></svg>Run DSR Analysis
+            </button>
+          </div>
+        </div>
+
+        <div class="verdict-card" id="result-panel">
+          <div class="empty-state" id="empty-state">
+            <div class="empty-icon"><svg><use href="#ic-chart"/></svg></div>
+            <div class="empty-title">Awaiting Analysis</div>
+            <div class="empty-sub">Masukkan commitment dan income,<br>kemudian tekan Run DSR Analysis.</div>
+          </div>
+          <div id="result-content" style="display:none">
+            <div class="verdict-hdr">
+              <div class="card-label"><span class="dot"></span>Analysis Result</div>
+              <div class="verdict-badge vb-neutral" id="verdict-badge">PENDING</div>
+            </div>
+            <div class="status-strip"><div class="status-fill" id="status-fill" style="width:0%"></div></div>
+            <div class="gauge-wrap">
+              <div class="gauge-hdr">
+                <span class="gauge-title">DSR Ratio</span>
+                <span class="gauge-pct" id="gauge-pct">0.00%</span>
+              </div>
+              <div class="gauge-track">
+                <div class="gauge-fill" id="gauge-fill" style="width:0%"></div>
+                <div class="gauge-marker" id="gauge-marker" style="left:60%" data-label="Threshold 60%"></div>
+              </div>
+              <div class="gauge-ticks">
+                <span class="gauge-tick">0%</span><span class="gauge-tick">25%</span><span class="gauge-tick">50%</span><span class="gauge-tick">75%</span><span class="gauge-tick">100%</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="analysis-list">
+              <div class="analysis-item"><span class="ai-label">Total Commitment</span><span class="ai-value" id="res-commitment">—</span></div>
+              <div class="analysis-item"><span class="ai-label">Gross Monthly Income</span><span class="ai-value" id="res-income">—</span></div>
+              <div class="analysis-item"><span class="ai-label">Net Disposable Income</span><span class="ai-value" id="res-ndi">—</span></div>
+              <div class="analysis-item"><span class="ai-label">Policy Threshold</span><span class="ai-value" id="res-thresh">—</span></div>
+              <div class="analysis-item"><span class="ai-label" style="color:var(--text-primary);font-weight:500">DSR Ratio</span><span class="ai-value" style="font-size:16px" id="res-dsr">—</span></div>
+              <div class="analysis-item"><span class="ai-label">Margin to Threshold</span><span class="ai-value" id="res-margin">—</span></div>
+            </div>
+            <div class="intel-block" id="intel-block">
+              <div class="intel-label"><svg><use href="#ic-info"/></svg>Assessment Commentary</div>
+              <div class="intel-text" id="intel-text">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-note">CREDORA Lite — Untuk penilaian awal sahaja. Bukan keputusan kredit rasmi. &nbsp;·&nbsp; <a href="https://github.com" target="_blank">GitHub</a> &nbsp;·&nbsp; MIT License</div>
+    </div>
+
+    <!-- PAGE: THRESHOLD CONFIG -->
+    <div class="page" id="page-config">
+      <div class="ws-grid" style="grid-template-columns:1fr 320px">
+        <div>
+          <div class="card">
+            <div class="card-hdr"><div class="card-label"><span class="dot"></span>Preset Threshold Profiles</div></div>
+            <div class="thresh-config-grid">
+              <div class="thresh-config-card selected" data-preset="60" onclick="selectPreset(this,60)">
+                <div class="tcc-header">
+                  <span class="tcc-code">DSR — Standard</span>
+                  <div class="tcc-check"><svg><use href="#ic-check"/></svg></div>
+                </div>
+                <div class="tcc-val">60%</div>
+                <div class="tcc-name">Debt Service Ratio</div>
+                <div class="tcc-desc">Had standard BNM untuk pembiayaan perumahan dan peribadi</div>
+              </div>
+              <div class="thresh-config-card" data-preset="70" onclick="selectPreset(this,70)">
+                <div class="tcc-header">
+                  <span class="tcc-code">NDR — Negotiated</span>
+                  <div class="tcc-check"><svg><use href="#ic-check"/></svg></div>
+                </div>
+                <div class="tcc-val">70%</div>
+                <div class="tcc-name">Negotiated Debt Rate</div>
+                <div class="tcc-desc">Kadar dirundingkan untuk pemohon dengan profil pendapatan kukuh</div>
+              </div>
+              <div class="thresh-config-card" data-preset="75" onclick="selectPreset(this,75)">
+                <div class="tcc-header">
+                  <span class="tcc-code">Gomen</span>
+                  <div class="tcc-check"><svg><use href="#ic-check"/></svg></div>
+                </div>
+                <div class="tcc-val">75%</div>
+                <div class="tcc-name">Penjawat Awam</div>
+                <div class="tcc-desc">Threshold khas untuk pemohon sektor awam (penjawat kerajaan)</div>
+              </div>
+              <div class="thresh-config-card" data-preset="80" onclick="selectPreset(this,80)">
+                <div class="tcc-header">
+                  <span class="tcc-code">BLR — Base Lending</span>
+                  <div class="tcc-check"><svg><use href="#ic-check"/></svg></div>
+                </div>
+                <div class="tcc-val">80%</div>
+                <div class="tcc-name">Base Lending Rate</div>
+                <div class="tcc-desc">Had tertinggi untuk kes khas dengan sokongan tambahan</div>
+              </div>
+            </div>
+
+            <div class="config-section">
+              <div class="config-section-title"><span class="dot"></span>Custom Threshold Value</div>
+              <label class="form-label">Set threshold tersuai untuk sesi ini</label>
+              <div class="range-wrap">
+                <input type="range" id="thresh-range" min="30" max="95" value="60" step="1" oninput="onRangeChange(this)">
+                <div class="range-val" id="range-val-display">60%</div>
+              </div>
+              <div class="hint" style="margin-top:10px">Skala: 30% (konservatif) → 95% (liberal). Nilai ini akan digunakan pada DSR Analyser.</div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <button class="btn-save" onclick="saveThreshConfig()">
+                <svg><use href="#ic-save"/></svg>Apply & Save Config
+              </button>
+              <button class="btn-ghost" onclick="resetThreshConfig()">
+                <svg><use href="#ic-reset"/></svg>Reset Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-hdr"><div class="card-label"><span class="dot"></span>Active Configuration</div></div>
+            <div class="analysis-list">
+              <div class="analysis-item"><span class="ai-label">Active Threshold</span><span class="ai-value pc" id="cfg-active-thresh">60%</span></div>
+              <div class="analysis-item"><span class="ai-label">Profile Type</span><span class="ai-value" id="cfg-profile-type">DSR Standard</span></div>
+              <div class="analysis-item"><span class="ai-label">PASS Zone</span><span class="ai-value pc" id="cfg-pass-zone">0% – 51%</span></div>
+              <div class="analysis-item"><span class="ai-label">CAUTION Zone</span><span class="ai-value cc" id="cfg-caution-zone">51% – 60%</span></div>
+              <div class="analysis-item"><span class="ai-label">FAIL Zone</span><span class="ai-value fc" id="cfg-fail-zone">> 60%</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hdr"><div class="card-label"><span class="dot"></span>Display Options</div></div>
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">Auto-save to History</div>
+                <div class="toggle-sub">Simpan setiap analisis secara automatik</div>
+              </div>
+              <div class="toggle on" id="toggle-autosave" onclick="toggleOption(this,'autosave')"></div>
+            </div>
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">Show Commentary</div>
+                <div class="toggle-sub">Papar ulasan analisis selepas pengiraan</div>
+              </div>
+              <div class="toggle on" id="toggle-commentary" onclick="toggleOption(this,'commentary')"></div>
+            </div>
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">Show Gauge Bar</div>
+                <div class="toggle-sub">Papar bar visual DSR ratio</div>
+              </div>
+              <div class="toggle on" id="toggle-gauge" onclick="toggleOption(this,'gauge')"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: HISTORY -->
+    <div class="page" id="page-history">
+      <div class="history-stats">
+        <div class="h-stat">
+          <div class="h-stat-label">Total Records</div>
+          <div class="h-stat-val" id="hs-total">0</div>
+        </div>
+        <div class="h-stat">
+          <div class="h-stat-label">Pass</div>
+          <div class="h-stat-val pc" id="hs-pass">0</div>
+        </div>
+        <div class="h-stat">
+          <div class="h-stat-label">Caution</div>
+          <div class="h-stat-val cc" id="hs-caution">0</div>
+        </div>
+        <div class="h-stat">
+          <div class="h-stat-label">Fail</div>
+          <div class="h-stat-val fc" id="hs-fail">0</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-label);letter-spacing:.06em;text-transform:uppercase">Analysis Records</div>
+        <button class="btn-danger" onclick="clearAllHistory()">
+          <svg><use href="#ic-trash"/></svg>Clear All
+        </button>
+      </div>
+
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date & Time</th>
+              <th>Commitment</th>
+              <th>Income</th>
+              <th>NDI</th>
+              <th>DSR</th>
+              <th>Threshold</th>
+              <th>Verdict</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr id="history-empty-row">
+              <td colspan="9" style="text-align:center;padding:40px;color:var(--text-tertiary);font-size:12px">
+                Tiada rekod. Jalankan analisis DSR untuk mula merekod.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg><use href="#ic-check"/></svg>
+  <span id="toast-msg">Saved</span>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let activeThresh = 60;
+let options = { autosave: true, commentary: true, gauge: true };
+let history = [];
+
+const STORAGE_KEY = 'credora_lite_history';
+const CONFIG_KEY  = 'credora_lite_config';
+
+// ─── INIT ─────────────────────────────────────────────────
+(function init() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) try { history = JSON.parse(saved); } catch(e){}
+
+  const cfg = localStorage.getItem(CONFIG_KEY);
+  if (cfg) try {
+    const c = JSON.parse(cfg);
+    activeThresh = c.thresh || 60;
+    options = {...options, ...c.options};
+    applyConfigToUI();
+  } catch(e){}
+
+  renderHistory();
+})();
+
+function applyConfigToUI() {
+  // sync thresh pills
+  document.querySelectorAll('.thresh-pill').forEach(p => {
+    p.classList.toggle('active', parseFloat(p.dataset.val) === activeThresh);
+  });
+  document.getElementById('active-thresh-display').textContent = activeThresh + '%';
+  // sync config page
+  document.getElementById('thresh-range').value = activeThresh;
+  document.getElementById('range-val-display').textContent = activeThresh + '%';
+  updateConfigPanel();
+  // sync preset cards
+  document.querySelectorAll('.thresh-config-card').forEach(c => {
+    c.classList.toggle('selected', parseFloat(c.dataset.preset) === activeThresh);
+  });
+  // sync toggles
+  ['autosave','commentary','gauge'].forEach(k => {
+    const el = document.getElementById('toggle-' + k);
+    if (el) el.classList.toggle('on', options[k]);
+  });
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────
+const pageMap = {
+  analyser: { name: 'DSR Analyser', badge: 'Debt Service Ratio' },
+  config:   { name: 'Threshold Config', badge: 'Policy Settings' },
+  history:  { name: 'History', badge: 'Analysis Records' }
+};
+
+function nav(el, page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+
+  const info = pageMap[page];
+  document.getElementById('tb-name').textContent = info.name;
+  document.getElementById('tb-badge').textContent = info.badge;
+
+  // Topbar right actions
+  const r = document.getElementById('tb-right');
+  if (page === 'analyser') {
+    r.innerHTML = `<button class="tb-btn" onclick="resetForm()"><svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-reset"/></svg>Reset</button>`;
+  } else if (page === 'history') {
+    r.innerHTML = `<button class="tb-btn danger" onclick="clearAllHistory()"><svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ic-trash"/></svg>Clear All</button>`;
+    renderHistory();
+  } else {
+    r.innerHTML = '';
+  }
+}
+
+// ─── DSR ANALYSER ────────────────────────────────────────
+function selectThresh(el, val) {
+  document.querySelectorAll('.thresh-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  activeThresh = val;
+  document.getElementById('inp-custom').value = '';
+  document.getElementById('active-thresh-display').textContent = val + '%';
+  onInputChange();
+}
+
+function onCustomChange(inp) {
+  const v = parseFloat(inp.value);
+  if (!isNaN(v) && v > 0 && v <= 100) {
+    document.querySelectorAll('.thresh-pill').forEach(p => p.classList.remove('active'));
+    activeThresh = v;
+    document.getElementById('active-thresh-display').textContent = v + '%';
+    onInputChange();
+  }
+}
+
+function onInputChange() {
+  const c = parseFloat(document.getElementById('inp-commitment').value) || 0;
+  const i = parseFloat(document.getElementById('inp-income').value) || 0;
+  if (i > 0) {
+    const dsr = (c / i) * 100;
+    const ndi = i - c;
+    const margin = activeThresh - dsr;
+    setTile('mt-dsr', dsr.toFixed(2) + '%', dsrCls(dsr), 'vs threshold ' + activeThresh + '%', 'mt-dsr-sub');
+    setTile('mt-ndi', fmtRM(ndi), ndi >= 0 ? '' : 'fc', 'Pendapatan bersih bulanan', 'mt-ndi-sub');
+    setTile('mt-margin', (margin >= 0 ? '+' : '') + margin.toFixed(2) + '%', margin >= 0 ? 'pc' : 'fc', margin >= 0 ? 'Buffer selamat' : 'Melebihi threshold', 'mt-margin-sub');
+  }
+}
+
+function dsrCls(dsr) {
+  if (dsr <= activeThresh * 0.85) return 'pc';
+  if (dsr <= activeThresh) return 'cc';
+  return 'fc';
+}
+
+function setTile(id, val, cls, sub, subId) {
+  const el = document.getElementById(id);
+  el.textContent = val;
+  el.className = 'metric-value ' + cls;
+  if (subId) document.getElementById(subId).textContent = sub;
+}
+
+function fmtRM(n) {
+  return 'RM ' + Math.abs(n).toLocaleString('ms-MY', {minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtRMSigned(n) { return (n < 0 ? '−' : '') + fmtRM(n); }
+
+function runAnalysis() {
+  const commitment = parseFloat(document.getElementById('inp-commitment').value) || 0;
+  const income = parseFloat(document.getElementById('inp-income').value);
+  const errEl = document.getElementById('err-msg');
+
+  if (!income || income <= 0) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  const thresh = activeThresh;
+  const dsr = (commitment / income) * 100;
+  const ndi = income - commitment;
+  const margin = thresh - dsr;
+
+  let verdict, vbClass, fillColor, commentary;
+  if (dsr <= thresh * 0.75) {
+    verdict = 'PASS'; vbClass = 'vb-pass'; fillColor = 'var(--pass)';
+    commentary = `DSR berada pada tahap <strong>${dsr.toFixed(2)}%</strong>, iaitu <strong>${(thresh-dsr).toFixed(2)} mata peratusan</strong> di bawah threshold <strong>${thresh}%</strong>. Profil pemohon <strong>kukuh</strong> — kapasiti pembiayaan tambahan masih ada. NDI bulanan ialah <strong>${fmtRM(ndi)}</strong>.`;
+  } else if (dsr <= thresh * 0.90) {
+    verdict = 'PASS'; vbClass = 'vb-pass'; fillColor = 'var(--pass)';
+    commentary = `DSR pada <strong>${dsr.toFixed(2)}%</strong> — lulus tetapi margin mula menyempit. Buffer tinggal <strong>${margin.toFixed(2)}%</strong>. Perhatian diperlukan jika ada pembiayaan baru dirancang.`;
+  } else if (dsr <= thresh) {
+    verdict = 'CAUTION'; vbClass = 'vb-caution'; fillColor = 'var(--caution)';
+    commentary = `DSR pada <strong>${dsr.toFixed(2)}%</strong> — hampir capai had threshold <strong>${thresh}%</strong>. Buffer tinggal <strong>${margin.toFixed(2)}%</strong>. Semak semula struktur komitmen sebelum lulus pembiayaan tambahan.`;
+  } else {
+    verdict = 'FAIL'; vbClass = 'vb-fail'; fillColor = 'var(--fail)';
+    commentary = `DSR melebihi threshold — <strong>${dsr.toFixed(2)}%</strong> berbanding had <strong>${thresh}%</strong>. Lebihan sebanyak <strong>${Math.abs(margin).toFixed(2)}%</strong>. Permohonan <strong>tidak layak</strong> pada aras semasa. Pertimbangkan penstrukturan semula komitmen.`;
+  }
+
+  const badge = document.getElementById('verdict-badge');
+  badge.textContent = verdict;
+  badge.className = 'verdict-badge ' + vbClass;
+
+  const pct = Math.min(dsr, 100);
+  const gf = document.getElementById('gauge-fill');
+  gf.style.width = pct.toFixed(2) + '%';
+  gf.style.background = fillColor;
+  const gPct = document.getElementById('gauge-pct');
+  gPct.textContent = dsr.toFixed(2) + '%';
+  gPct.style.color = fillColor;
+
+  const marker = document.getElementById('gauge-marker');
+  marker.style.left = Math.min(thresh, 100) + '%';
+  marker.setAttribute('data-label', 'Threshold ' + thresh.toFixed(1) + '%');
+
+  // toggle gauge visibility
+  document.querySelector('.gauge-wrap').style.display = options.gauge ? '' : 'none';
+
+  const sf = document.getElementById('status-fill');
+  sf.style.width = pct.toFixed(2) + '%';
+  sf.style.background = fillColor;
+
+  document.getElementById('res-commitment').textContent = fmtRM(commitment);
+  document.getElementById('res-income').textContent = fmtRM(income);
+
+  const ndiEl = document.getElementById('res-ndi');
+  ndiEl.textContent = fmtRMSigned(ndi);
+  ndiEl.className = 'ai-value ' + (ndi >= 0 ? 'pc' : 'fc');
+
+  document.getElementById('res-thresh').textContent = thresh.toFixed(1) + '%';
+
+  const dsrEl = document.getElementById('res-dsr');
+  dsrEl.textContent = dsr.toFixed(2) + '%';
+  dsrEl.className = 'ai-value ' + dsrCls(dsr);
+
+  const marginEl = document.getElementById('res-margin');
+  marginEl.textContent = (margin >= 0 ? '+' : '') + margin.toFixed(2) + '%';
+  marginEl.className = 'ai-value ' + (margin >= 0 ? 'pc' : 'fc');
+
+  document.getElementById('intel-text').innerHTML = commentary;
+  document.getElementById('intel-block').style.display = options.commentary ? '' : 'none';
+
+  setTile('mt-dsr', dsr.toFixed(2) + '%', dsrCls(dsr), 'vs threshold ' + thresh + '%', 'mt-dsr-sub');
+  setTile('mt-ndi', fmtRM(ndi), ndi >= 0 ? '' : 'fc', 'Pendapatan bersih bulanan', 'mt-ndi-sub');
+  setTile('mt-margin', (margin >= 0 ? '+' : '') + margin.toFixed(2) + '%', margin >= 0 ? 'pc' : 'fc', margin >= 0 ? 'Buffer selamat' : 'Melebihi threshold', 'mt-margin-sub');
+
+  document.getElementById('empty-state').style.display = 'none';
+  const rc = document.getElementById('result-content');
+  rc.style.display = 'block';
+  rc.style.animation = 'none';
+  requestAnimationFrame(() => { rc.style.animation = 'fadeIn .3s ease'; });
+
+  // auto-save
+  if (options.autosave) {
+    saveRecord({ commitment, income, ndi, dsr, thresh, verdict });
+    showToast('Analisis disimpan ke History');
+  }
+}
+
+function resetForm() {
+  document.getElementById('inp-commitment').value = '';
+  document.getElementById('inp-income').value = '';
+  document.getElementById('inp-custom').value = '';
+  document.getElementById('err-msg').classList.remove('show');
+  document.getElementById('empty-state').style.display = 'flex';
+  document.getElementById('result-content').style.display = 'none';
+  document.querySelectorAll('.thresh-pill').forEach(p => p.classList.remove('active'));
+  const def = document.querySelector(`[data-val="${activeThresh}"]`);
+  if (def) def.classList.add('active');
+  else document.querySelector('[data-val="60"]').classList.add('active');
+  ['mt-dsr','mt-ndi','mt-margin'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+    document.getElementById(id).className = 'metric-value';
+  });
+  document.getElementById('mt-dsr-sub').textContent = 'Awaiting input';
+  document.getElementById('mt-ndi-sub').textContent = 'Income − Commitment';
+  document.getElementById('mt-margin-sub').textContent = 'Buffer remaining';
+}
+
+// ─── THRESHOLD CONFIG ─────────────────────────────────────
+function selectPreset(el, val) {
+  document.querySelectorAll('.thresh-config-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  activeThresh = val;
+  document.getElementById('thresh-range').value = val;
+  document.getElementById('range-val-display').textContent = val + '%';
+  updateConfigPanel();
+}
+
+function onRangeChange(inp) {
+  const v = parseInt(inp.value);
+  document.getElementById('range-val-display').textContent = v + '%';
+  activeThresh = v;
+  // deselect preset cards if not matching
+  document.querySelectorAll('.thresh-config-card').forEach(c => {
+    c.classList.toggle('selected', parseInt(c.dataset.preset) === v);
+  });
+  updateConfigPanel();
+}
+
+function updateConfigPanel() {
+  const t = activeThresh;
+  const passMax = Math.floor(t * 0.85);
+  document.getElementById('cfg-active-thresh').textContent = t + '%';
+  document.getElementById('cfg-pass-zone').textContent = `0% – ${passMax}%`;
+  document.getElementById('cfg-caution-zone').textContent = `${passMax+1}% – ${t}%`;
+  document.getElementById('cfg-fail-zone').textContent = `> ${t}%`;
+
+  const presets = { 60:'DSR Standard', 70:'NDR Negotiated', 75:'Penjawat Awam', 80:'BLR Base Lending' };
+  document.getElementById('cfg-profile-type').textContent = presets[t] || 'Custom (' + t + '%)';
+
+  // sync analyser pills
+  document.getElementById('active-thresh-display').textContent = t + '%';
+  document.querySelectorAll('.thresh-pill').forEach(p => {
+    p.classList.toggle('active', parseFloat(p.dataset.val) === t);
+  });
+}
+
+function saveThreshConfig() {
+  const cfg = { thresh: activeThresh, options };
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  showToast('Konfigurasi disimpan');
+}
+
+function resetThreshConfig() {
+  activeThresh = 60;
+  document.getElementById('thresh-range').value = 60;
+  document.getElementById('range-val-display').textContent = '60%';
+  document.querySelectorAll('.thresh-config-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.preset === '60');
+  });
+  options = { autosave: true, commentary: true, gauge: true };
+  ['autosave','commentary','gauge'].forEach(k => {
+    document.getElementById('toggle-' + k).classList.add('on');
+  });
+  updateConfigPanel();
+  localStorage.removeItem(CONFIG_KEY);
+  showToast('Config direset ke default');
+}
+
+function toggleOption(el, key) {
+  el.classList.toggle('on');
+  options[key] = el.classList.contains('on');
+}
+
+// ─── HISTORY ─────────────────────────────────────────────
+function saveRecord(data) {
+  const record = {
+    id: Date.now(),
+    ts: new Date().toLocaleString('ms-MY'),
+    commitment: data.commitment,
+    income: data.income,
+    ndi: data.ndi,
+    dsr: data.dsr,
+    thresh: data.thresh,
+    verdict: data.verdict
+  };
+  history.unshift(record);
+  if (history.length > 100) history = history.slice(0, 100);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const tbody = document.getElementById('history-tbody');
+  const pass = history.filter(r => r.verdict === 'PASS').length;
+  const caution = history.filter(r => r.verdict === 'CAUTION').length;
+  const fail = history.filter(r => r.verdict === 'FAIL').length;
+
+  document.getElementById('hs-total').textContent = history.length;
+  document.getElementById('hs-pass').textContent = pass;
+  document.getElementById('hs-caution').textContent = caution;
+  document.getElementById('hs-fail').textContent = fail;
+
+  if (history.length === 0) {
+    tbody.innerHTML = `<tr id="history-empty-row"><td colspan="9" style="text-align:center;padding:40px;color:var(--text-tertiary);font-size:12px">Tiada rekod. Jalankan analisis DSR untuk mula merekod.</td></tr>`;
+    return;
+  }
+
+  const verdictBadge = (v) => {
+    const cls = v === 'PASS' ? 'pass' : v === 'CAUTION' ? 'caution' : 'fail';
+    return `<span class="h-badge ${cls}">${v}</span>`;
+  };
+
+  tbody.innerHTML = history.map((r, i) => `
+    <tr>
+      <td class="mono" style="color:var(--text-tertiary)">${i + 1}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;white-space:nowrap">${r.ts}</td>
+      <td class="mono">${fmtRM(r.commitment)}</td>
+      <td class="mono">${fmtRM(r.income)}</td>
+      <td class="mono" style="color:${r.ndi >= 0 ? 'var(--pass)' : 'var(--fail)'}">${fmtRMSigned(r.ndi)}</td>
+      <td class="mono" style="color:${r.dsr <= r.thresh * 0.85 ? 'var(--pass)' : r.dsr <= r.thresh ? 'var(--caution)' : 'var(--fail)'};font-weight:600">${r.dsr.toFixed(2)}%</td>
+      <td class="mono" style="color:var(--text-tertiary)">${r.thresh}%</td>
+      <td>${verdictBadge(r.verdict)}</td>
+      <td><button class="del-row-btn" onclick="deleteRecord(${r.id})" title="Padam rekod"><svg><use href="#ic-x"/></svg></button></td>
+    </tr>
+  `).join('');
+}
+
+function deleteRecord(id) {
+  history = history.filter(r => r.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+function clearAllHistory() {
+  if (!confirm('Padam semua rekod history? Tindakan ini tidak boleh dibatalkan.')) return;
+  history = [];
+  localStorage.removeItem(STORAGE_KEY);
+  renderHistory();
+  showToast('Semua rekod dipadam');
+}
+
+// ─── TOAST ───────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── KEYBOARD ────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const activePage = document.querySelector('.page.active');
+    if (activePage && activePage.id === 'page-analyser') runAnalysis();
+  }
+});
+
+// init config panel display
+updateConfigPanel();
+</script>
+</body>
+</html>
